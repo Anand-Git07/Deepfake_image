@@ -1,0 +1,64 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Django/local backend files
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
+*.log
+
+# Machine learning artifacts
+backend/ml/models/
+backend/ml/checkpoints/
+backend/ml/runs/
+*.pth
+*.pt
+*.onnx
+
+# Node/Vite frontend
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+build/
+frontend/build/
+.vite/
+frontend/.vite/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!backend/.env.example
+!frontend/.env.example
+
+# Archives and generated reports
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+report_build/*.pdf
+report_build/*.docx
+
+# Editor/project files
+.idea/
+.vscode/
+*.swp
+*.swo
