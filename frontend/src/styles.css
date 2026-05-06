@@ -1,0 +1,69 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(124, 92, 255, 0.16), transparent 28%),
+    radial-gradient(circle at 84% 36%, rgba(255, 77, 77, 0.08), transparent 32%),
+    #09090d;
+  color: #f7f4ff;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #51476e #171721;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #51476e;
+  border-radius: 999px;
+}
+
+.glass {
+  background: linear-gradient(145deg, rgba(30, 29, 42, 0.94), rgba(17, 17, 25, 0.9));
+  border: 1px solid rgba(135, 123, 180, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 60px rgba(0, 0, 0, 0.3);
+}
+
+.active-nav {
+  background: linear-gradient(90deg, rgba(124, 92, 255, 0.58), rgba(124, 92, 255, 0.28));
+  border-color: rgba(156, 139, 255, 0.75);
+  box-shadow: 0 0 25px rgba(124, 92, 255, 0.28);
+}
+
+.dashed-upload {
+  background-image: linear-gradient(rgba(23, 23, 33, 0.72), rgba(23, 23, 33, 0.72)), linear-gradient(90deg, #8f83c8 50%, transparent 50%), linear-gradient(90deg, #8f83c8 50%, transparent 50%), linear-gradient(0deg, #8f83c8 50%, transparent 50%), linear-gradient(0deg, #8f83c8 50%, transparent 50%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%, 16px 2px, 16px 2px, 2px 16px, 2px 16px;
+  background-position: 0 0, left top, left bottom, left top, right top;
+  animation: border-dance 18s linear infinite;
+}
+
+@keyframes border-dance {
+  to {
+    background-position: 0 0, 320px top, -320px bottom, left 320px, right -320px;
+  }
+}
+
+.confidence-ring {
+  background: conic-gradient(var(--ring-color) calc(var(--score) * 1%), rgba(255, 255, 255, 0.12) 0);
+}
+
+.history-table th,
+.history-table td {
+  white-space: nowrap;
+}
