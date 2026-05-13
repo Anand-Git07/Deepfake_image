@@ -87,5 +87,6 @@ REST_FRAMEWORK = {
 
 MAX_UPLOAD_SIZE_MB = int(os.environ.get("DEEPGUARD_MAX_UPLOAD_SIZE_MB", "200"))
 DEEPFAKE_THRESHOLD = float(os.environ.get("DEEPGUARD_DEEPFAKE_THRESHOLD", "70"))
-AUTHENTIC_THRESHOLD = float(os.environ.get("DEEPGUARD_AUTHENTIC_THRESHOLD", "40"))
+AUTHENTIC_THRESHOLD = float(os.environ.get("DEEPGUARD_AUTHENTIC_THRESHOLD", "55"))
 MODEL_PATH = os.environ.get("DEEPGUARD_MODEL_PATH", str(BASE_DIR / "ml" / "models" / "deepguard_cnn.pth"))
+MODEL_INPUT_SIZE = int(os.environ.get("DEEPGUARD_MODEL_INPUT_SIZE", "128"))

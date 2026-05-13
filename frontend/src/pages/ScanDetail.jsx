@@ -2,6 +2,7 @@ import { Download, FileText, Layers, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import CircularProgress from "../components/CircularProgress.jsx";
+import ForensicPanels from "../components/ForensicPanels.jsx";
 import MediaPreview from "../components/MediaPreview.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import SignalBar from "../components/SignalBar.jsx";
@@ -35,6 +36,10 @@ export default function ScanDetail() {
   if (!scan) return <div className="text-white/60">Loading scan detail...</div>;
 
   const danger = scan.verdict === "Deepfake";
+  const resultLabel = scan.verdict === "Deepfake" ? "Fake" : scan.verdict === "Authentic" ? "Real" : "Uncertain";
+  const watermark = scan.raw_output?.watermark;
+  const evidence = scan.raw_output?.evidence || [];
+  const frameTimeline = scan.frame_timeline || [];
   const signals = scan.signals || {
     facial: scan.facial_score,
     pixel: scan.pixel_score,
@@ -93,12 +98,33 @@ export default function ScanDetail() {
           {tab === "Overview" && (
             <div className="p-7">
               <div className={`mb-8 rounded-3xl border p-6 ${danger ? "border-red-400/50 bg-red-500/20" : "border-emerald-400/50 bg-emerald-500/10"}`}>
-                <div className="mb-3 flex items-center gap-4">
+                <div className="mb-3 flex flex-wrap items-center gap-4">
                   <ShieldAlert className={danger ? "text-red-300" : "text-emerald-300"} />
                   <h3 className={`text-xl font-black ${danger ? "text-red-300" : "text-emerald-300"}`}>
-                    {scan.verdict === "Deepfake" ? "Deepfake Detected" : scan.verdict === "Authentic" ? "Authentic Media" : "Manual Review Recommended"}
+                    Result: {resultLabel}
                   </h3>
                   <VerdictBadge verdict={scan.verdict} />
+                  {watermark?.detected && (
+                    <span className="rounded-full border border-red-300/50 bg-red-500/20 px-3 py-1 text-xs font-black text-red-200">
+                      Watermark Detected
+                    </span>
+                  )}
+                </div>
+                <div className="mb-4 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wider text-white/45">Result</p>
+                    <p className="mt-1 text-2xl font-black">{resultLabel}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wider text-white/45">Confidence</p>
+                    <p className="mt-1 text-2xl font-black">{Number(scan.confidence).toFixed(1)}%</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                    <p className="text-xs font-bold uppercase tracking-wider text-white/45">Risk Level</p>
+                    <p className={`mt-1 text-2xl font-black ${danger ? "text-red-200" : scan.verdict === "Authentic" ? "text-emerald-200" : "text-amber-200"}`}>
+                      {danger ? "High" : scan.verdict === "Authentic" ? "Low" : "Review"}
+                    </p>
+                  </div>
                 </div>
                 <p className="max-w-3xl leading-7 text-white/80">{scan.explanation}</p>
               </div>
@@ -127,6 +153,69 @@ export default function ScanDetail() {
                   </div>
                 </div>
               </div>
+
+              <div className="mt-8">
+                <ForensicPanels scan={scan} />
+              </div>
+
+              {evidence.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="mb-5 text-sm font-black uppercase tracking-wider">Evidence Summary</h3>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {evidence.map((item) => (
+                      <div key={`${item.label}-${item.value}`} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="font-black">{item.label}</p>
+                          <span className={`rounded-full px-3 py-1 text-xs font-black ${
+                            item.severity === "high" ? "bg-red-500/20 text-red-200" : item.severity === "medium" ? "bg-amber-500/20 text-amber-200" : "bg-emerald-500/20 text-emerald-200"
+                          }`}>
+                            {item.value}
+                          </span>
+                        </div>
+                        {item.detail && <p className="mt-2 text-sm leading-6 text-white/55">{item.detail}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {frameTimeline.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="mb-5 text-sm font-black uppercase tracking-wider">Frame Timeline</h3>
+                  <div className="grid gap-4">
+                    {frameTimeline.map((frame) => {
+                      const preview = frame.images?.["Grad-CAM"] || frame.images?.["DCT Analysis"] || frame.images?.Original;
+                      return (
+                        <div key={frame.frame} className={`grid gap-4 rounded-2xl border p-4 md:grid-cols-[180px_1fr] ${
+                          frame.suspicious ? "border-red-400/40 bg-red-500/10" : "border-white/10 bg-white/[0.04]"
+                        }`}>
+                          {preview && <img src={preview} alt={`Frame ${frame.frame}`} className="aspect-video w-full rounded-xl object-cover" />}
+                          <div>
+                            <div className="mb-3 flex flex-wrap items-center gap-3">
+                              <p className="font-black">Frame {frame.frame}</p>
+                              <span className="rounded-full bg-black/30 px-3 py-1 text-xs font-black text-white/70">{frame.timecode}</span>
+                              {frame.suspicious && <span className="rounded-full bg-red-500/25 px-3 py-1 text-xs font-black text-red-200">Most suspicious</span>}
+                            </div>
+                            <div className="mb-3 flex items-center gap-3">
+                              <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                                <div className="h-full rounded-full bg-red-400" style={{ width: `${frame.fake_probability}%` }} />
+                              </div>
+                              <b>{Number(frame.fake_probability).toFixed(1)}%</b>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {Object.entries(frame.images || {}).map(([label, image]) => (
+                                <a key={label} href={image} target="_blank" rel="noreferrer" className="rounded-lg border border-white/10 px-3 py-2 text-xs font-black text-white/65 hover:border-guard-purple">
+                                  {label}
+                                </a>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               <div className="mt-8">
                 <h3 className="mb-5 text-sm font-black uppercase tracking-wider">Processing Timeline</h3>

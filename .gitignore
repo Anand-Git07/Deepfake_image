@@ -62,3 +62,10 @@ report_build/*.docx
 .vscode/
 *.swp
 *.swo
+
+
+
+# ignore model photo file
+backend/ml/data/
+backend/ml/test_samples/
+backend/media/

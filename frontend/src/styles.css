@@ -63,6 +63,36 @@ body {
   background: conic-gradient(var(--ring-color) calc(var(--score) * 1%), rgba(255, 255, 255, 0.12) 0);
 }
 
+.runtime-progress {
+  width: 42%;
+  background: linear-gradient(90deg, #22d3ee, #a78bfa, #fbbf24);
+  animation: runtime-sweep 1.25s ease-in-out infinite;
+}
+
+@keyframes runtime-sweep {
+  0% {
+    transform: translateX(-110%);
+  }
+
+  55% {
+    width: 72%;
+  }
+
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes scanSweep {
+  0% {
+    transform: translateX(-140%);
+  }
+
+  100% {
+    transform: translateX(340%);
+  }
+}
+
 .history-table th,
 .history-table td {
   white-space: nowrap;

@@ -9,6 +9,9 @@ class ScanSerializer(serializers.ModelSerializer):
     processing_time = serializers.SerializerMethodField()
     size_label = serializers.SerializerMethodField()
     resolution = serializers.SerializerMethodField()
+    visual_steps = serializers.SerializerMethodField()
+    frame_timeline = serializers.SerializerMethodField()
+    result = serializers.SerializerMethodField()
 
     class Meta:
         model = Scan
@@ -19,6 +22,7 @@ class ScanSerializer(serializers.ModelSerializer):
             "original_filename",
             "file_type",
             "verdict",
+            "result",
             "confidence",
             "signals",
             "facial_score",
@@ -35,6 +39,8 @@ class ScanSerializer(serializers.ModelSerializer):
             "model_version",
             "explanation",
             "raw_output",
+            "visual_steps",
+            "frame_timeline",
             "processing_time",
             "processing_time_ms",
             "created_at",
@@ -66,3 +72,28 @@ class ScanSerializer(serializers.ModelSerializer):
 
     def get_resolution(self, obj):
         return f"{obj.width}x{obj.height}" if obj.width and obj.height else "Unknown"
+
+    def get_result(self, obj):
+        if obj.verdict == "Deepfake":
+            return "Fake"
+        if obj.verdict == "Authentic":
+            return "Real"
+        return "Uncertain"
+
+    def get_visual_steps(self, obj):
+        return self._absolute_media(obj.raw_output.get("visual_steps", []))
+
+    def get_frame_timeline(self, obj):
+        return self._absolute_media(obj.raw_output.get("frame_timeline", []))
+
+    def _absolute_media(self, value):
+        request = self.context.get("request")
+        if isinstance(value, str):
+            if request and value.startswith("/media/"):
+                return request.build_absolute_uri(value)
+            return value
+        if isinstance(value, list):
+            return [self._absolute_media(item) for item in value]
+        if isinstance(value, dict):
+            return {key: self._absolute_media(item) for key, item in value.items()}
+        return value
