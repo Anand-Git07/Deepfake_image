@@ -1,11 +1,13 @@
 import { Activity, FileImage, Info, Loader2, ScanLine, Upload, WandSparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import CityDeepfakeHeatMap from "../components/CityDeepfakeHeatMap.jsx";
 import MediaPreview from "../components/MediaPreview.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import VerdictBadge from "../components/VerdictBadge.jsx";
 import { detectFiles } from "../services/api.js";
 import { normalizeResults } from "../utils/format.js";
+import { cityDeepfakeHeatmap } from "../utils/mockData.js";
 
 const accepted = ".jpg,.jpeg,.png,.webp,.bmp,.tiff,.mp4,.mov,.avi,.mkv,.webm";
 const deepAnalysisMs = 48000;
@@ -18,6 +20,16 @@ const fallbackProcessingSteps = [
   "Grad-CAM",
   "Suspicious Regions",
   "Final Result"
+];
+const graphSlots = [
+  { x: 50, y: 14 },
+  { x: 78, y: 24 },
+  { x: 84, y: 55 },
+  { x: 66, y: 82 },
+  { x: 34, y: 82 },
+  { x: 16, y: 55 },
+  { x: 22, y: 24 },
+  { x: 50, y: 88 }
 ];
 
 function wait(ms) {
@@ -111,6 +123,7 @@ export default function ImageAnalysis() {
   const activeStep = Math.min(visualSteps.length - 1, Math.floor(progressRatio * visualSteps.length));
   const activeVisual = visualSteps[activeStep] || visualSteps[0];
   const frameTimeline = replayScan?.frame_timeline || [];
+  const evidenceSteps = visualSteps.slice(0, activeStep + 1);
 
   return (
     <div>
@@ -126,7 +139,7 @@ export default function ImageAnalysis() {
         <span className="font-black text-guard-amber">Uncertain</span> for manual verification.
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_430px]">
+      <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
         <section>
           <label
             onDragOver={(event) => {
@@ -141,7 +154,7 @@ export default function ImageAnalysis() {
               setIsDragging(false);
               addFiles(event.dataTransfer.files);
             }}
-            className={`dashed-upload grid min-h-[420px] place-items-center rounded-[28px] p-8 text-center transition ${
+            className={`dashed-upload grid min-h-[330px] place-items-center rounded-[24px] p-6 text-center transition ${
               isDragging ? "scale-[1.01] shadow-glow" : ""
             } ${loading ? "cursor-wait opacity-70" : "cursor-pointer"}`}
           >
@@ -154,14 +167,14 @@ export default function ImageAnalysis() {
               onChange={(event) => addFiles(event.target.files)}
             />
             <div>
-              <div className="mx-auto mb-6 grid h-20 w-20 place-items-center rounded-3xl bg-white/10 text-white shadow-glow">
-                <Upload size={38} />
+              <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-white/10 text-white shadow-glow">
+                <Upload size={30} />
               </div>
-              <h3 className="text-2xl font-black">Drag & drop images here</h3>
-              <p className="mt-2 text-white/70">
+              <h3 className="text-xl font-black">Drag & drop images here</h3>
+              <p className="mt-2 text-sm text-white/70">
                 or <span className="font-bold text-purple-300 underline">browse files</span> · JPEG, PNG, WebP up to 20 MB each
               </p>
-              <div className="mt-8 grid grid-cols-3 gap-5 text-sm text-white/70">
+              <div className="mt-6 grid grid-cols-3 gap-3 text-xs text-white/70">
                 <div>
                   <p className="font-black text-white">Single image</p>
                   <p>Instant analysis</p>
@@ -228,71 +241,49 @@ export default function ImageAnalysis() {
           )}
         </section>
 
-        <aside className="space-y-6">
-          <div className="glass rounded-3xl p-6">
-            <h3 className="mb-6 text-lg font-black">How it works</h3>
-            {[
-              ["01", "Upload", "Drag & drop or browse JPEG/PNG/WebP images and videos up to 20 MB each"],
-              ["02", "Investigate", "Face boxes, pixel scan overlays, DCT maps, edge maps, and Grad-CAM visuals are generated"],
-              ["03", "Review", "Watch a staged forensic timeline before the final fake/real verdict"],
-              ["04", "Export", "Save to history and download a full detection report"]
-            ].map(([step, title, text]) => (
-              <div className="mb-6 flex gap-4" key={step}>
-                <span className="text-sm font-black text-guard-purple">{step}</span>
-                <div>
-                  <p className="font-black">{title}</p>
-                  <p className="text-sm leading-6 text-white/60">{text}</p>
+        <aside>
+          <div className="glass flex min-h-[330px] flex-col rounded-[24px] p-5">
+            <h3 className="mb-4 text-base font-black">How it works</h3>
+            <div className="flex flex-1 flex-col justify-between">
+              {[
+                ["01", "Upload", "Drag & drop or browse JPEG/PNG/WebP images and videos up to 20 MB each"],
+                ["02", "Investigate", "Face boxes, pixel scan overlays, DCT maps, edge maps, and Grad-CAM visuals are generated"],
+                ["03", "Review", "Watch a staged forensic timeline before the final fake/real verdict"],
+                ["04", "Export", "Save to history and download a full detection report"]
+              ].map(([step, title, text]) => (
+                <div className="flex gap-3" key={step}>
+                  <span className="text-xs font-black text-guard-purple">{step}</span>
+                  <div>
+                    <p className="text-sm font-black">{title}</p>
+                    <p className="text-xs leading-5 text-white/60">{text}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-          <div className="glass rounded-3xl p-6">
-            <h3 className="mb-5 text-sm font-black uppercase tracking-wider">Supported Formats</h3>
-            <div className="flex flex-wrap gap-3">
-              {[".jpeg", ".png", ".webp", ".bmp", ".tiff", ".mp4", ".mov"].map((item) => (
-                <span key={item} className="rounded-lg bg-white/10 px-3 py-2 text-sm font-black text-white/70">
-                  {item}
-                </span>
               ))}
             </div>
           </div>
         </aside>
       </div>
 
+      <div className="mt-8">
+        <CityDeepfakeHeatMap cities={cityDeepfakeHeatmap} />
+      </div>
+
       {loading && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-[#07070c]/80 p-4 backdrop-blur-md" role="status" aria-live="polite">
-          <div className="glass w-full max-w-5xl overflow-hidden rounded-3xl">
-            <div className="grid gap-0 lg:grid-cols-[1fr_420px]">
-              <div className="relative min-h-[360px] bg-black/30">
-                {primaryPreview ? (
-                  primaryPreviewIsVideo ? (
-                    <video src={primaryPreview.url} className="h-full min-h-[360px] w-full object-cover" muted autoPlay loop playsInline />
-                  ) : (
-                    <img src={primaryPreview.url} alt={primaryPreview.name} className="h-full min-h-[360px] w-full object-cover" />
-                  )
-                ) : (
-                  <div className="grid h-full min-h-[360px] place-items-center text-white/40">Preparing preview</div>
-                )}
-                <div className="absolute inset-0 grid place-items-center bg-black/45">
-                  <div className="grid h-24 w-24 place-items-center rounded-full border border-cyan-300/40 bg-cyan-300/10 shadow-[0_0_35px_rgba(34,211,238,0.28)]">
-                    <ScanLine className="animate-pulse text-cyan-200" size={42} />
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-6 sm:p-8">
-                <div className="mb-6 flex items-center gap-3">
+          <div className="glass w-full max-w-7xl overflow-hidden rounded-3xl">
+            <div className="border-b border-white/10 p-5 sm:p-6">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-center gap-3">
                   <span className="grid h-11 w-11 place-items-center rounded-2xl bg-guard-purple/25 text-guard-purple">
                     <Activity size={22} />
                   </span>
                   <div>
                     <p className="text-xl font-black">AI forensic investigation</p>
-                    <p className="text-sm font-semibold text-white/55">Deep visual pipeline is processing the media</p>
+                    <p className="text-sm font-semibold text-white/55">Connected visual pipeline is extracting forensic evidence</p>
                   </div>
                 </div>
-
-                <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                  <div className="mb-3 flex items-center justify-between text-sm font-bold text-white/60">
+                <div className="min-w-[260px] rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <div className="mb-3 flex items-center justify-between text-xs font-black uppercase tracking-wider text-white/50">
                     <span>{activeVisual?.step || "Preparing analysis"}</span>
                     <span>{elapsedSeconds}s / 48s</span>
                   </div>
@@ -300,45 +291,121 @@ export default function ImageAnalysis() {
                     <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-guard-purple to-red-400 transition-all" style={{ width: `${progressRatio * 100}%` }} />
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <div className="mb-6 overflow-hidden rounded-2xl border border-cyan-300/20 bg-black/35">
-                  <div className="relative aspect-video">
-                    {activeVisual?.image ? (
-                      <img src={activeVisual.image} alt={activeVisual.step} className="h-full w-full object-cover" />
-                    ) : primaryPreviewIsVideo ? (
-                      <video src={primaryPreview?.url} className="h-full w-full object-cover" muted autoPlay loop playsInline />
-                    ) : (
-                      <img src={primaryPreview?.url} alt={primaryPreview?.name || "analysis preview"} className="h-full w-full object-cover" />
-                    )}
-                    <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(34,211,238,0.16),transparent)] opacity-80" />
+            <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
+              <div className="forensic-graph relative min-h-[650px] overflow-hidden bg-black/20 p-4 sm:p-6">
+                <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  {visualSteps.map((item, index) => {
+                    const slot = graphSlots[index % graphSlots.length];
+                    const complete = index <= activeStep;
+                    return (
+                      <line
+                        key={`line-${item.step}-${index}`}
+                        x1="50"
+                        y1="50"
+                        x2={slot.x}
+                        y2={slot.y}
+                        className={complete ? "forensic-link forensic-link--active" : "forensic-link"}
+                      />
+                    );
+                  })}
+                </svg>
+
+                <div className="absolute left-1/2 top-1/2 z-10 w-[min(46vw,420px)] -translate-x-1/2 -translate-y-1/2">
+                  <div className="relative overflow-hidden rounded-[28px] border border-cyan-300/35 bg-black/55 shadow-[0_0_48px_rgba(34,211,238,0.2)]">
+                    <div className="aspect-square">
+                      {activeVisual?.image ? (
+                        <img src={activeVisual.image} alt={activeVisual.step} className="h-full w-full object-cover" />
+                      ) : primaryPreviewIsVideo ? (
+                        <video src={primaryPreview?.url} className="h-full w-full object-cover" muted autoPlay loop playsInline />
+                      ) : (
+                        <img src={primaryPreview?.url} alt={primaryPreview?.name || "analysis preview"} className="h-full w-full object-cover" />
+                      )}
+                    </div>
+                    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle,transparent_42%,rgba(34,211,238,0.16)_100%)]" />
                     <div className="pointer-events-none absolute left-0 top-0 h-full w-1/3 animate-[scanSweep_2.4s_linear_infinite] bg-gradient-to-r from-transparent via-cyan-300/20 to-transparent" />
                     {replayScan?.result && activeVisual?.step === "Final Result" && (
-                      <div className="absolute bottom-4 left-4 rounded-2xl border border-white/15 bg-black/70 px-5 py-4">
+                      <div className="absolute bottom-24 left-4 rounded-2xl border border-white/15 bg-black/70 px-5 py-4">
                         <p className="text-xs font-black uppercase tracking-wider text-white/50">Final Result</p>
                         <p className="text-3xl font-black">{replayScan.result}</p>
                         <p className="text-sm font-bold text-white/70">Confidence {Number(replayScan.confidence).toFixed(1)}%</p>
                       </div>
                     )}
+                    <div className="absolute bottom-4 left-4 right-4 rounded-2xl border border-white/10 bg-black/65 px-4 py-3 backdrop-blur">
+                      <p className="text-xs font-black uppercase tracking-wider text-white/45">Processing view</p>
+                      <p className="truncate text-sm font-bold text-white/80">{activeVisual?.step || "Preparing analysis"}</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  {visualSteps.map((item, index) => (
+                {visualSteps.map((item, index) => {
+                  const slot = graphSlots[index % graphSlots.length];
+                  const complete = index < activeStep;
+                  const active = index === activeStep;
+                  return (
                     <div
                       key={`${item.step}-${index}`}
-                      className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-bold transition ${
-                        index <= activeStep ? "border-cyan-300/35 bg-cyan-300/10 text-white" : "border-white/10 bg-white/[0.03] text-white/45"
-                      }`}
+                      className={`forensic-node absolute z-20 -translate-x-1/2 -translate-y-1/2 ${active ? "forensic-node--active" : ""} ${complete ? "forensic-node--complete" : ""}`}
+                      style={{ left: `${slot.x}%`, top: `${slot.y}%` }}
                     >
-                      <span
-                        className={`grid h-7 w-7 place-items-center rounded-full text-xs ${
-                          index <= activeStep ? "bg-cyan-300 text-[#071018]" : "bg-white/10 text-white/50"
-                        }`}
-                      >
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border text-xs font-black">
                         {index + 1}
                       </span>
-                      <span className="flex-1">{item.step}</span>
-                      {replayScan && index <= activeStep && <span className="text-xs text-cyan-200">visual generated</span>}
+                      <span className="min-w-0 truncate text-xs font-black">{item.step}</span>
+                      {active && <ScanLine size={15} className="animate-pulse text-cyan-200" />}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <aside className="border-l border-white/10 bg-black/20 p-5 sm:p-6">
+                <div className="mb-5">
+                  <p className="text-xs font-black uppercase tracking-wider text-cyan-200/70">Evidence source</p>
+                  <h3 className="mt-1 text-xl font-black">Original upload</h3>
+                  <p className="mt-2 text-sm leading-6 text-white/55">
+                    Static source image stays here while the center graph shows each active forensic process.
+                  </p>
+                </div>
+
+                <div className="mb-5 overflow-hidden rounded-2xl border border-cyan-300/20 bg-black/35">
+                  <div className="relative aspect-video">
+                    {primaryPreview ? (
+                      primaryPreviewIsVideo ? (
+                        <video src={primaryPreview.url} className="h-full w-full object-cover" muted autoPlay loop playsInline />
+                      ) : (
+                        <img src={primaryPreview.url} alt={primaryPreview.name} className="h-full w-full object-cover" />
+                      )
+                    ) : (
+                      <div className="grid h-full place-items-center text-white/40">Preparing preview</div>
+                    )}
+                    <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,transparent,rgba(34,211,238,0.12),transparent)] opacity-80" />
+                    <div className="absolute bottom-3 left-3 right-3 rounded-xl border border-white/10 bg-black/65 px-3 py-2 backdrop-blur">
+                      <p className="truncate text-xs font-bold text-white/70">{primaryPreview?.name || "Queued media"}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid max-h-[300px] gap-3 overflow-y-auto pr-1">
+                  {evidenceSteps.map((item, index) => (
+                    <div
+                      key={`${item.step}-${index}`}
+                      className={`grid grid-cols-[76px_1fr] gap-3 rounded-2xl border p-2 transition ${
+                        index === activeStep ? "border-cyan-300/45 bg-cyan-300/10" : "border-white/10 bg-white/[0.03]"
+                      }`}
+                    >
+                      <div className="h-14 overflow-hidden rounded-xl bg-black/40">
+                        {item.image ? (
+                          <img src={item.image} alt={item.step} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="grid h-full place-items-center text-[10px] text-white/30">Queued</div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black">{item.step}</p>
+                        <p className="text-xs font-semibold text-cyan-200/70">{index === activeStep ? "Processing now" : "Visual generated"}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -360,10 +427,10 @@ export default function ImageAnalysis() {
                   </div>
                 )}
 
-                <p className="mt-6 text-sm leading-6 text-white/55">
-                  Please keep this screen open while DeepGuard builds face boxes, heatmaps, DCT maps, frame timelines, and the final report.
+                <p className="mt-5 text-sm leading-6 text-white/55">
+                  Keep this screen open while DeepGuard links face boxes, heatmaps, DCT maps, Grad-CAM, and the final report.
                 </p>
-              </div>
+              </aside>
             </div>
           </div>
         </div>

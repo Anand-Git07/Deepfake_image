@@ -79,3 +79,14 @@ export const mockStats = {
   avg_processing_time: 1456,
   verdict_distribution: { Deepfake: 5, Authentic: 5, Uncertain: 2 }
 };
+
+export const cityDeepfakeHeatmap = [
+  { city: "Delhi", state: "NCR", reports: 184, deepfakeRate: 72, lat: 28.6139, lng: 77.209 },
+  { city: "Mumbai", state: "Maharashtra", reports: 156, deepfakeRate: 68, lat: 19.076, lng: 72.8777 },
+  { city: "Bengaluru", state: "Karnataka", reports: 128, deepfakeRate: 64, lat: 12.9716, lng: 77.5946 },
+  { city: "Hyderabad", state: "Telangana", reports: 117, deepfakeRate: 61, lat: 17.385, lng: 78.4867 },
+  { city: "Chennai", state: "Tamil Nadu", reports: 92, deepfakeRate: 57, lat: 13.0827, lng: 80.2707 },
+  { city: "Kolkata", state: "West Bengal", reports: 81, deepfakeRate: 53, lat: 22.5726, lng: 88.3639 },
+  { city: "Pune", state: "Maharashtra", reports: 74, deepfakeRate: 49, lat: 18.5204, lng: 73.8567 },
+  { city: "Ahmedabad", state: "Gujarat", reports: 66, deepfakeRate: 46, lat: 23.0225, lng: 72.5714 }
+];
