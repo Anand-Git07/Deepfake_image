@@ -69,3 +69,6 @@ report_build/*.docx
 backend/ml/data/
 backend/ml/test_samples/
 backend/media/
+
+#assets file 
+frontend/src/assets
