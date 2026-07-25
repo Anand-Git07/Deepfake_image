@@ -15,14 +15,16 @@ DeepGuard is a full-stack AI-powered deepfake detection system with a Django RES
 ## Project Structure
 
 ```text
-backend/
-  deepguard/          Django project settings and routes
-  scans/              DRF APIs, Scan model, serializers, reports
-  ml/                 CNN architecture, inference, training stub
-frontend/
-  src/components/     Shared UI pieces
-  src/pages/          Image Analysis, History, Detail, Model Info, About
-  src/services/       API client
+DeepGuard/
+├── backend/
+│   ├── deepguard/      # Django project settings and routes
+│   ├── scans/          # DRF APIs, Scan model, serializers, reports
+│   └── ml/             # CNN architecture, inference, training stub
+└── frontend/
+    └── src/
+        ├── components/ # Shared UI pieces
+        ├── pages/      # Image Analysis, History, Detail, etc.
+        └── services/   # API client
 ```
 
 ## Backend Setup
@@ -73,3 +75,5 @@ Verdict thresholds:
 ## Notes
 
 This project is production-style and resume-friendly, but the bundled CNN weights are intentionally not included. Without weights, DeepGuard uses deterministic visual heuristics so uploads, history, reports, and UI flows still work end-to-end.
+
+##

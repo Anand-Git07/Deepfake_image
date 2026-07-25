@@ -421,7 +421,7 @@ class DeepfakeDetector:
             images["Grad-CAM"] = self._save_rgb_array(folder, base_url, f"{prefix}_gradcam_overlay.jpg", gradcam)
         return images
 
-    def _model_probability(self, image):
+    def _prepare_model_input(self, image):
         if not self.model or not torch:
             return None
         try:
@@ -429,9 +429,21 @@ class DeepfakeDetector:
             resized = image.resize((image_size, image_size))
             values = torch.tensor(list(resized.getdata()), dtype=torch.float32).view(image_size, image_size, 3)
             values = values.permute(2, 0, 1).unsqueeze(0) / 255.0
-            mean = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
-            std = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
-            values = ((values - mean) / std).to(self.device)
+            mean = torch.tensor([0.485, 0.456, 0.406], device=self.device).view(1, 3, 1, 1)
+            std = torch.tensor([0.229, 0.224, 0.225], device=self.device).view(1, 3, 1, 1)
+            return ((values.to(self.device) - mean) / std)
+        except Exception:
+            return None
+
+    def _model_probability(self, image):
+        if not self.model or not torch:
+            return None
+        try:
+            image_size = settings.MODEL_INPUT_SIZE
+            resized = image.resize((image_size, image_size))
+            values = torch.tensor(list(resized.getdata()), dtype=torch.float32).view(image_size, image_size, 3)
+            values = self._prepare_model_input(image)
+            if values is None: return None
             with torch.no_grad():
                 probability = torch.sigmoid(self.model(values)).item() * 100
             return probability
@@ -564,6 +576,8 @@ class DeepfakeDetector:
 
     def _extract_frames(self, path):
         if cv2 is None or Image is None:
+            return []
+        if not path.exists():
             return []
         capture = cv2.VideoCapture(str(path))
         total = int(capture.get(cv2.CAP_PROP_FRAME_COUNT) or 0)

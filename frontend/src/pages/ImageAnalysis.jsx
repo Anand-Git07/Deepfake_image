@@ -10,7 +10,6 @@ import { normalizeResults } from "../utils/format.js";
 import { cityDeepfakeHeatmap } from "../utils/mockData.js";
 
 const accepted = ".jpg,.jpeg,.png,.webp,.bmp,.tiff,.mp4,.mov,.avi,.mkv,.webm";
-const deepAnalysisMs = 48000;
 const fallbackProcessingSteps = [
   "Original",
   "Face Detection",
@@ -31,12 +30,6 @@ const graphSlots = [
   { x: 22, y: 24 },
   { x: 50, y: 88 }
 ];
-
-function wait(ms) {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
-}
 
 export default function ImageAnalysis() {
   const navigate = useNavigate();
@@ -90,24 +83,20 @@ export default function ImageAnalysis() {
 
   async function submit() {
     if (!files.length) return;
-    const startedAt = Date.now();
     setLoading(true);
     setReplayScan(null);
     setError("");
     try {
       const payload = await detectFiles(files);
       const normalized = normalizeResults(payload);
-      setResults(normalized);
-      setReplayScan(normalized[0] || null);
-      const remainingDelay = deepAnalysisMs - (Date.now() - startedAt);
-      if (remainingDelay > 0) {
-        await wait(remainingDelay);
-      }
       if (normalized.length === 1) {
+        // For a single file, we navigate directly after the analysis is complete on the backend.
+        // The loading state will be turned off upon navigation.
         navigate(`/scan-detail/${normalized[0].id}`);
       }
     } catch (err) {
-      setError(err?.response?.data?.detail || "Detection API is not reachable. Start Django backend and try again.");
+      const message = err?.response?.data?.detail || err?.message || "Detection API is not reachable. Start Django backend and try again.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -119,7 +108,10 @@ export default function ImageAnalysis() {
   const visualSteps = replayScan?.visual_steps?.length
     ? replayScan.visual_steps
     : fallbackProcessingSteps.map((step) => ({ step, image: primaryPreview?.url }));
-  const progressRatio = Math.min(1, (elapsedSeconds * 1000) / deepAnalysisMs);
+
+  // Use a mock duration for the progress bar animation, as the artificial delay was removed.
+  const mockAnimationDurationMs = 12000;
+  const progressRatio = Math.min(1, (elapsedSeconds * 1000) / mockAnimationDurationMs);
   const activeStep = Math.min(visualSteps.length - 1, Math.floor(progressRatio * visualSteps.length));
   const activeVisual = visualSteps[activeStep] || visualSteps[0];
   const frameTimeline = replayScan?.frame_timeline || [];
@@ -154,9 +146,8 @@ export default function ImageAnalysis() {
               setIsDragging(false);
               addFiles(event.dataTransfer.files);
             }}
-            className={`dashed-upload grid min-h-[330px] place-items-center rounded-[24px] p-6 text-center transition ${
-              isDragging ? "scale-[1.01] shadow-glow" : ""
-            } ${loading ? "cursor-wait opacity-70" : "cursor-pointer"}`}
+            className={`dashed-upload grid min-h-[330px] place-items-center rounded-[24px] p-6 text-center transition ${isDragging ? "scale-[1.01] shadow-glow" : ""
+              } ${loading ? "cursor-wait opacity-70" : "cursor-pointer"}`}
           >
             <input
               type="file"
@@ -285,7 +276,7 @@ export default function ImageAnalysis() {
                 <div className="min-w-[260px] rounded-2xl border border-white/10 bg-white/[0.04] p-4">
                   <div className="mb-3 flex items-center justify-between text-xs font-black uppercase tracking-wider text-white/50">
                     <span>{activeVisual?.step || "Preparing analysis"}</span>
-                    <span>{elapsedSeconds}s / 48s</span>
+                    <span>{elapsedSeconds}s</span>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-white/10">
                     <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-guard-purple to-red-400 transition-all" style={{ width: `${progressRatio * 100}%` }} />
@@ -391,9 +382,8 @@ export default function ImageAnalysis() {
                   {evidenceSteps.map((item, index) => (
                     <div
                       key={`${item.step}-${index}`}
-                      className={`grid grid-cols-[76px_1fr] gap-3 rounded-2xl border p-2 transition ${
-                        index === activeStep ? "border-cyan-300/45 bg-cyan-300/10" : "border-white/10 bg-white/[0.03]"
-                      }`}
+                      className={`grid grid-cols-[76px_1fr] gap-3 rounded-2xl border p-2 transition ${index === activeStep ? "border-cyan-300/45 bg-cyan-300/10" : "border-white/10 bg-white/[0.03]"
+                        }`}
                     >
                       <div className="h-14 overflow-hidden rounded-xl bg-black/40">
                         {item.image ? (
