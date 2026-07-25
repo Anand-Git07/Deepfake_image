@@ -33,7 +33,7 @@ export default function CityDeepfakeHeatMap({ cities = [] }) {
             <MapPinned size={15} />
             India Threat Map
           </div>
-          <h2 className="text-2xl font-black">Deepfake image problem by city</h2>
+          <h2 className="text-2xl font-black">Deepfake Live Cases by City</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">
             Brighter and larger zones indicate cities with more detected or reported deepfake image cases.
           </p>
